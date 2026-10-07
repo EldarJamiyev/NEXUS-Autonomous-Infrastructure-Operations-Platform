@@ -1,0 +1,13 @@
+flowchart LR
+  GIT[(baselines/*.yaml)] --> N1[Normalize intent]
+  AG[Host agent / FIM report] --> N2[Normalize actual]
+  N1 --> CMP{Diff}
+  N2 --> CMP
+  CMP -->|equal| OK[COMPLIANT]
+  CMP -->|differs| CLS[Classify: COSMETIC · OPERATIONAL · SECURITY · CRITICAL]
+  CLS --> M{Maintenance active?}
+  M -->|yes| EXP[EXPECTED - review when window ends]
+  M -->|no| INC[Incident for SECURITY / CRITICAL]
+  INC --> DEC[Decision engine]
+  CLS --> DEC
+  DEC --> TX[Restore baseline transaction] --> VER[Checksum = intent?] --> DONE[REMEDIATED]

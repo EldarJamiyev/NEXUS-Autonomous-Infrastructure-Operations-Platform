@@ -1,0 +1,18 @@
+# Mirrors baselines/*.yaml (Git intent). Keep both in the same commit.
+nexus_url: "https://nexus.corp.nexus.lab"
+ssh_baseline:
+  permit_root_login: "no"
+  password_authentication: "no"
+  port: 22
+  max_auth_tries: 3
+  x11_forwarding: "no"
+docker_baseline:
+  live_restore: true
+  log_max_size: "50m"
+node_exporter_port: 9100
+approved_tmp_paths: [/var/tmp/nexus-approved]
+unit_map:
+  nginx: nginx
+  ssh: ssh
+  docker: docker
+  monitoring-agent: prometheus-node-exporter

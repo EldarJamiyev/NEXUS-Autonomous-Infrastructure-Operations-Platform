@@ -1,0 +1,12 @@
+- name: Find old files under an approved temporary path
+  ansible.builtin.find:
+    paths: "{{ nexus_path }}"
+    age: "{{ nexus_days }}d"
+    file_type: file
+  register: old_files
+  when: nexus_path in approved_tmp_paths
+- name: Remove them
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ old_files.files | default([]) }}"

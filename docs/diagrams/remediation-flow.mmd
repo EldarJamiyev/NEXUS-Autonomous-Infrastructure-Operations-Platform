@@ -1,0 +1,10 @@
+flowchart TB
+  A[DETECTED] --> B[TRIAGED] --> C[POLICY CHECK] --> D[SAFETY CHECK: allowlist, preconditions]
+  D -->|condition cleared| SK[SKIPPED - nothing to do]
+  D --> E[BACKUP] --> F[EXECUTION]
+  F -->|validation failed| RB[ROLLBACK]
+  F --> G{VERIFICATION of the real end state}
+  G -->|pass| H[COMMIT] --> I[CHATOPS: AUTOHEAL EVENT] --> J[AUDIT]
+  G -->|fail| RB --> K{Original state verified?}
+  K -->|yes| L[ROLLED_BACK - human required] --> I2[CHATOPS: AUTOHEAL FAILED] --> J
+  K -->|no| M[ROLLBACK FAILED - page on-call] --> J

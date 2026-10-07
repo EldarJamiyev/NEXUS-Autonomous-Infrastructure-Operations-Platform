@@ -1,0 +1,32 @@
+apiVersion: nexus.omnis/v1
+kind: AccessPolicy
+metadata:
+  id: POL-FINANCE
+  name: Finance applications
+  owner: GG-FINANCE
+  description: Finance reporting console during business hours; administrative protocols are always denied.
+spec:
+  subjects:
+    groups: [GG-FINANCE]
+  conditions:
+    min_identity_confidence: 80
+    max_device_risk: 40
+    source_vlans: [30]
+    device_kinds: [workstation]
+  grants:
+    - destinations: [APP01]
+      protocol: TCP
+      ports: [8443]
+      lease_minutes: 240
+      max_lease_minutes: 600
+  denies:
+    - destinations: [ANY]
+      protocol: TCP
+      ports: [22, 3389, 5985]
+      reason: Finance users never receive administrative protocols
+  schedule:
+    windows:
+      - days: [mon, tue, wed, thu, fri]
+        start: "07:00"
+        end: "20:00"
+    outside: deny

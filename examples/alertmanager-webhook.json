@@ -1,0 +1,14 @@
+{
+  "version": "4",
+  "status": "firing",
+  "receiver": "nexus",
+  "groupKey": "{}:{alertname=\"NginxDown\"}",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {"alertname": "NginxDown", "device": "LINUX01", "service": "nginx", "severity": "critical"},
+      "annotations": {"summary": "nginx is not running on LINUX01"},
+      "startsAt": "2026-10-06T16:44:10Z"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+# Access policy: short-lived administrative access for admins from verified admin workstations.
+apiVersion: nexus.omnis/v1
+kind: AccessPolicy
+metadata:
+  id: POL-IT-ADMIN
+  name: IT administration access
+  owner: GG-IT
+  description: Ephemeral SSH/RDP/web-UI leases for network and system administrators.
+spec:
+  subjects:
+    groups: [GG-NETWORK-ADMIN, GG-SYSTEM-ADMIN]
+  conditions:
+    min_identity_confidence: 80
+    max_device_risk: 50
+    max_user_risk: 60
+    source_vlans: [30]
+    device_kinds: [workstation]
+  grants:
+    - destinations: [LINUX01, APP01, MON01]
+      protocol: TCP
+      ports: [22]
+      lease_minutes: 30
+      max_lease_minutes: 240
+    - destinations: [DC01]
+      protocol: TCP
+      ports: [3389]
+      lease_minutes: 30
+      max_lease_minutes: 120
+    - destinations: [PFSENSE]
+      protocol: TCP
+      ports: [443]
+      lease_minutes: 15
+      max_lease_minutes: 60
+      approval: always
+  schedule:
+    windows:
+      - days: [mon, tue, wed, thu, fri]
+        start: "08:00"
+        end: "18:00"
+    outside: approval_required

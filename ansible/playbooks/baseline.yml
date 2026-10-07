@@ -1,0 +1,4 @@
+- name: Enforce the Git baseline (safe to run repeatedly)
+  hosts: linux_servers
+  become: true
+  roles: [common, security, ssh, monitoring]

@@ -1,0 +1,15 @@
+apiVersion: nexus.omnis/v1
+kind: HostBaseline
+server: APP01
+inherits: linux-common
+services:
+  ssh: {required: true, enabled: true, ports: [22]}
+  docker: {required: true, enabled: true}
+  monitoring-agent: {required: true, enabled: true, ports: [9100]}
+docker:
+  live_restore: true
+  log_max_size: 50m
+monitoring:
+  exporter: node_exporter
+  port: 9100
+  enabled: true

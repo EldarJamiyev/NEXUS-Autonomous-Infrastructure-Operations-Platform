@@ -1,0 +1,14 @@
+id: runbook-disk-critical
+title: Disk critical
+trigger: {alert: DiskSpaceCritical}
+target: APP01
+diagnostics:
+  - {probe: disk_below, threshold: 90, description: "Is any filesystem at or above 90%?"}
+  - {probe: service_running, service: docker, description: "Are containers still running?"}
+preconditions: [Usage above 85%, Host reachable]
+actions:
+  - {action: REM-DISK-ROTATE-LOGS, when: log growth identified}
+  - {action: REM-DISK-CLEAN-TMP, when: usage still above 80% after rotation}
+verification: [Usage below 85%]
+rollback: Not required - rotation and approved temp cleanup never touch application data.
+escalation: Usage above 95% or growth returns within one hour - open a capacity change request.

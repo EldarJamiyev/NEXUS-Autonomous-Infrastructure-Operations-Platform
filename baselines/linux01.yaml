@@ -1,0 +1,25 @@
+apiVersion: nexus.omnis/v1
+kind: HostBaseline
+server: LINUX01
+inherits: linux-common
+services:
+  nginx: {required: true, enabled: true, ports: [80, 443]}
+  ssh: {required: true, enabled: true, ports: [22]}
+  docker: {required: true, enabled: true}
+  monitoring-agent: {required: true, enabled: true, ports: [9100]}
+nginx:
+  listen: [80, 443]
+  server_name: portal.corp.nexus.lab
+  upstream: "10.20.20.30:8080"
+  server_tokens: "off"
+  ssl_certificate: /etc/ssl/portal.corp.nexus.lab.crt
+docker:
+  live_restore: true
+  log_max_size: 50m
+monitoring:
+  exporter: node_exporter
+  port: 9100
+  enabled: true
+firewall:   # documented intent; enforced through policies/firewall-baseline.yaml and leases
+  allowed:
+    - {source: GG-IT, destination: LINUX01, protocol: TCP, port: 22, via: ephemeral lease}

@@ -1,0 +1,13 @@
+id: runbook-unknown-device
+title: Unknown device
+trigger: {alert: HighRiskDevice}
+target: dynamic
+diagnostics:
+  - {probe: policy_test, destination: LINUX01, port: 22, expect: DENY, description: "Can the device reach administrative services?"}
+  - {probe: no_active_leases, description: "Does the device hold any access lease?"}
+preconditions: [Device not already quarantined, Switch port known, Not a protected infrastructure asset]
+actions:
+  - {action: REM-NET-QUARANTINE, when: identity UNKNOWN and risk >= 80 (SECURITY-004)}
+verification: [Device in VLAN 99, Policy test denies TCP/22 to LINUX01, No active leases]
+rollback: Release quarantine returns the port to its previous VLAN (human review required).
+escalation: Always notify security; physically locate via switch port and MAC vendor.

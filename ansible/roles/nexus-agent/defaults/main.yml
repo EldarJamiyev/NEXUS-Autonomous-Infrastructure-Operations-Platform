@@ -1,0 +1,2 @@
+nexus_agent_interval: 5min
+nexus_agent_api_key: "{{ lookup('ansible.builtin.env', 'NEXUS_AGENT_API_KEY') }}"

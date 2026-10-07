@@ -1,0 +1,1 @@
+[{"device": "LINUX01", "component": "ssh", "actual": {"PermitRootLogin": "no", "PasswordAuthentication": "no", "Port": 22, "MaxAuthTries": 3, "X11Forwarding": "no", "HostKey": "/etc/ssh/ssh_host_ed25519_key"}}]

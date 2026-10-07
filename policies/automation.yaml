@@ -1,0 +1,14 @@
+apiVersion: nexus.omnis/v1
+kind: AutomationPolicy
+metadata:
+  id: POL-AUTOMATION
+  name: Automation safety rails
+  owner: GG-NETWORK-ADMIN
+  description: Human-in-the-loop rules. SAFE runs automatically, REVERSIBLE runs when confidence is high, HIGH_IMPACT and CRITICAL need approval.
+spec:
+  confidence_threshold: 80
+  high_impact_confidence_threshold: 90
+  max_automated_per_minute: 10
+  max_per_target_action_10min: 3
+  protected_assets: [PFSENSE, SW-CORE01, DC01]
+  emergency_allows_critical: false

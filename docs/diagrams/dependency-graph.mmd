@@ -1,0 +1,10 @@
+flowchart RL
+  dns[dns@DC01] --> ad[ad-ds@DC01]
+  ntp[ntp@DC01] --> ad
+  ad --> portal[portal@APP01]
+  nginx[nginx@LINUX01] --> portal
+  docker[docker@APP01] --> pg[postgresql@APP01]
+  pg --> portal
+  docker --> portal
+  prom[prometheus@MON01] --> graf[grafana@MON01]
+  loki[loki@MON01] --> graf

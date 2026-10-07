@@ -1,0 +1,16 @@
+apiVersion: nexus.omnis/v1
+kind: BaselinePolicy
+metadata:
+  id: POL-MONITORING-BASELINE
+  name: Monitoring coverage and thresholds
+  owner: GG-IT
+spec:
+  required_agents: {LINUX01: node_exporter, APP01: node_exporter, DC01: windows_exporter}
+  thresholds:
+    disk_critical_percent: 90
+    disk_recover_percent: 85
+    cpu_critical_percent: 92
+    cert_warning_days: 14
+    ntp_max_skew_seconds: 300
+    dhcp_pool_critical_percent: 95
+    auth_failure_burst: 3

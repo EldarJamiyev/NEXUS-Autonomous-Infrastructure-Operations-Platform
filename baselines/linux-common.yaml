@@ -1,0 +1,13 @@
+# Common Linux server intent (Git-controlled desired state). Hosts inherit from this.
+apiVersion: nexus.omnis/v1
+kind: HostBaseline
+name: linux-common
+ssh:
+  permit_root_login: false
+  password_authentication: false
+  port: 22
+  max_auth_tries: 3
+  x11_forwarding: false
+files:
+  /etc/ssh/sshd_config: "0600"
+  /etc/shadow: "0640"

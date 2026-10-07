@@ -1,0 +1,19 @@
+apiVersion: nexus.omnis/v1
+kind: SecurityPolicy
+metadata:
+  id: SECURITY-004
+  name: Quarantine identityless high-risk endpoints
+  owner: GG-NETWORK-ADMIN
+  description: >
+    An endpoint with no establishable identity and critical risk is moved to VLAN 99.
+    Automatic only for unmanaged endpoints at autonomy level 3+; managed assets need approval
+    (or autonomy level 5). Infrastructure assets are never quarantined automatically.
+spec:
+  quarantine:
+    identity_levels: [UNKNOWN]
+    min_risk: 80
+    device_kinds: [unknown, workstation]
+    target_vlan: 99
+    automatic_min_autonomy: 3
+    managed_requires_level: 5
+    protected_devices: [PFSENSE, SW-CORE01, DC01, LINUX01, APP01, MON01]

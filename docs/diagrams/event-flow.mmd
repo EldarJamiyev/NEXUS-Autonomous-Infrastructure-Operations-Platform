@@ -1,0 +1,12 @@
+sequenceDiagram
+  participant E as Engine (sync, in a DB session)
+  participant DB as events table
+  participant H as after_commit hook
+  participant Q as Subscriber queues (bounded)
+  participant WS as WebSocket clients
+  E->>DB: INSERT event (same transaction as the state change)
+  E->>E: COMMIT
+  DB-->>H: commit succeeded
+  H->>Q: put_nowait(event) - oldest dropped if full
+  Q->>WS: send_json
+  Note over E,H: a rollback discards the pending events

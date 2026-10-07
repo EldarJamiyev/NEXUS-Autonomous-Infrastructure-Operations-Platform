@@ -1,0 +1,11 @@
+flowchart TB
+  ENG([IT engineer / operator]) -->|console, CLI, ChatOps| NEXUS[NEXUS OMNIS control plane]
+  NEXUS -->|rules, verification| FW[pfSense firewall]
+  NEXUS -->|switchport VLANs| SW[Core switch]
+  AD[Active Directory] -->|inventory + security events| NEXUS
+  SRV[Linux and Windows servers] -->|agent config reports| NEXUS
+  NEXUS -->|allowlisted remediation via Ansible| SRV
+  PROM[Prometheus + Alertmanager] -->|webhook alerts| NEXUS
+  NEXUS -->|/metrics| PROM
+  NEXUS -->|notifications| CHAT[Discord / Slack]
+  GIT[(Git: policies, baselines)] -->|desired state| NEXUS

@@ -1,0 +1,92 @@
+# NEXUS OMNIS
+#   docker compose up --build                              -> http://localhost:8000
+#   docker compose --profile observability up --build      -> + Prometheus :9090, Alertmanager :9093, Grafana :3000, Loki :3100
+name: nexus-omnis
+
+services:
+  nexus:
+    build: .
+    image: nexus-omnis:0.1.0
+    container_name: nexus
+    ports:
+      - "${NEXUS_HTTP_PORT:-8000}:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NEXUS_ENV: ${NEXUS_ENV:-simulation}
+      DATABASE_URL: sqlite:////data/nexus.db
+      NEXUS_LOG_FILE: /data/logs/nexus.log
+    volumes:
+      - nexus-data:/data
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    profiles: ["observability"]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+      - --web.enable-lifecycle
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    depends_on: [nexus]
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    profiles: ["observability"]
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+    volumes:
+      - ./alertmanager:/etc/alertmanager:ro
+    ports:
+      - "9093:9093"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.3.1
+    profiles: ["observability"]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_USERS_DEFAULT_THEME: dark
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/nexus-overview.json
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on: [prometheus, loki]
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:3.2.1
+    profiles: ["observability"]
+    command: ["-config.file=/etc/loki/loki-config.yml"]
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki-data:/loki
+    ports:
+      - "3100:3100"
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:3.2.1
+    profiles: ["observability"]
+    command: ["-config.file=/etc/promtail/promtail-config.yml"]
+    volumes:
+      - ./loki/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - nexus-data:/data:ro
+    depends_on: [loki]
+    restart: unless-stopped
+
+volumes:
+  nexus-data:
+  prometheus-data:
+  grafana-data:
+  loki-data:

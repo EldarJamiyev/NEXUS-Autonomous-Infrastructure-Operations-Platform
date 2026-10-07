@@ -1,0 +1,33 @@
+apiVersion: nexus.omnis/v1
+kind: FirewallPolicy
+metadata:
+  id: POL-FW-BASELINE
+  name: Firewall baseline
+  owner: GG-NETWORK-ADMIN
+  description: Ordered pfSense ruleset (first match wins). Leases are inserted dynamically at position 500+.
+spec:
+  aliases:
+    NET_MGMT: [10.10.10.0/24]
+    NET_SERVERS: [10.20.20.0/24]
+    NET_USERS: [10.30.30.0/24]
+    NET_MON: [10.40.40.0/24]
+    NET_DMZ: [10.50.50.0/24]
+    NET_QUARANTINE: [10.99.99.0/24]
+    HOST_MON01: [10.40.40.10]
+    NEXUS_CONTROLLER: [10.10.10.5]
+  rules:
+    - {id: FW-010, action: ALLOW, source: NET_MGMT, destination: ANY, protocol: ANY, port: ANY, description: Management network to all hosts (lockout protection)}
+    - {id: FW-020, action: DENY, source: NET_QUARANTINE, destination: ANY, protocol: ANY, port: ANY, description: Quarantine VLAN is isolated}
+    - {id: FW-100, action: ALLOW, source: NET_USERS, destination: LINUX01, protocol: TCP, port: "80,443", description: Intranet portal via Nginx}
+    - {id: FW-110, action: ALLOW, source: NET_USERS, destination: DC01, protocol: ANY, port: "53,88,123,389,445,636", description: "Directory, DNS and time"}
+    - {id: FW-120, action: ALLOW, source: NET_MON, destination: ANY, protocol: TCP, port: "9100,9182", description: Metrics scraping}
+    - {id: FW-125, action: ALLOW, source: LINUX01, destination: APP01, protocol: TCP, port: "8080", description: Reverse proxy upstream}
+    - {id: FW-130, action: ALLOW, source: NET_USERS, destination: APP01, protocol: TCP, port: "8443", description: Reporting console (legacy broad rule)}
+    - {id: FW-140, action: ALLOW, source: NET_SERVERS, destination: DC01, protocol: ANY, port: "53,88,123,389,636", description: Servers to directory}
+    - {id: FW-999, action: DENY, source: ANY, destination: ANY, protocol: ANY, port: ANY, description: Default deny}
+  positions:
+    quarantine: 30
+    nexus_blocks: 90
+    policy_denies: 200
+    leases: 500
+  management_path: {source: 10.10.10.5, destination: PFSENSE, protocol: TCP, port: 443}

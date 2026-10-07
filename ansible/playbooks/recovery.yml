@@ -1,0 +1,15 @@
+# Bring required services back (idempotent: only starts what is stopped).
+- name: Service recovery
+  hosts: linux_servers
+  become: true
+  tasks:
+    - name: Required services running
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: started
+      loop: [ssh, prometheus-node-exporter]
+    - name: Nginx running on web hosts
+      ansible.builtin.service:
+        name: nginx
+        state: started
+      when: inventory_hostname in groups['web']

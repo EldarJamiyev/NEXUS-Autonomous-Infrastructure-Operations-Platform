@@ -1,0 +1,16 @@
+- name: Base packages present
+  ansible.builtin.apt:
+    name: [chrony, unattended-upgrades, logrotate, curl, python3]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+- name: Time synchronisation running (Kerberos needs < 5 min skew)
+  ansible.builtin.service:
+    name: chrony
+    state: started
+    enabled: true
+- name: Login banner
+  ansible.builtin.copy:
+    dest: /etc/motd
+    content: "Authorised access only. Activity is monitored.\n"
+    mode: "0644"

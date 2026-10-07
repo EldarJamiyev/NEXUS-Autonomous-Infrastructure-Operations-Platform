@@ -1,0 +1,8 @@
+apiVersion: nexus.omnis/v1
+kind: HostBaseline
+server: PFSENSE
+system:
+  webgui_protocol: https
+  ssh_enabled: false
+  admin_mfa: true
+# Ruleset intent: policies/firewall-baseline.yaml (+ dynamic leases and NEXUS containment rules)

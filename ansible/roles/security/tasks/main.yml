@@ -1,0 +1,14 @@
+- name: Sensitive file permissions match baseline
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - {path: /etc/shadow, mode: "0640"}
+    - {path: /etc/ssh/sshd_config, mode: "0600"}
+- name: Kernel network hardening
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_set: true
+    state: present
+  loop: "{{ {'net.ipv4.conf.all.accept_redirects': 0, 'net.ipv4.conf.all.send_redirects': 0, 'net.ipv4.tcp_syncookies': 1} | dict2items }}"

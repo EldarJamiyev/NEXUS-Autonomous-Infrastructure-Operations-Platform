@@ -1,0 +1,5 @@
+[
+  {"EventID": 4624, "TargetUserName": "CORP\\eldar", "WorkstationName": "PC-023", "IpAddress": "10.30.30.42", "LogonType": 2, "Computer": "DC01"},
+  {"EventID": 4625, "TargetUserName": "aysel", "WorkstationName": "PC-025", "IpAddress": "10.30.30.44", "LogonType": 3, "Status": "0xC000006D", "SubStatus": "0xC000006A", "Computer": "DC01"},
+  {"EventID": 4728, "TargetUserName": "GG-NETWORK-ADMIN", "MemberName": "CN=murad,OU=IT,DC=corp,DC=nexus,DC=lab", "Computer": "DC01"}
+]

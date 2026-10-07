@@ -1,0 +1,4 @@
+- name: Monitoring agents
+  hosts: linux_servers
+  become: true
+  roles: [monitoring]

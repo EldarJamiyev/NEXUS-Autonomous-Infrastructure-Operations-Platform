@@ -1,0 +1,99 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (lint, types, tests, audit)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.lock
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.lock
+          pip install -e ".[dev]"
+      - name: Lint (ruff, includes bandit-style security rules)
+        run: ruff check nexus tests
+      - name: Type check (mypy)
+        run: mypy nexus
+      - name: Tests (pytest)
+        run: pytest -q
+      - name: Dependency vulnerability scan (pip-audit)
+        run: pip-audit -r requirements.lock
+
+  frontend:
+    name: Frontend (types, tests, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Type check
+        run: npm run typecheck
+      - name: Unit tests (vitest)
+        run: npm test
+      - name: Production build
+        run: npm run build
+
+  config:
+    name: Config validation (Prometheus, Alertmanager, Ansible)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: promtool and amtool
+        run: |
+          docker run --rm -v "$PWD/prometheus:/p" --entrypoint promtool prom/prometheus:v2.55.1 check rules /p/rules/nexus-alerts.yml
+          docker run --rm -v "$PWD/alertmanager:/a" --entrypoint amtool prom/alertmanager:v0.27.0 check-config /a/alertmanager.yml
+      - name: Ansible syntax check
+        run: |
+          pip install "ansible>=10,<11"
+          cd ansible && for pb in playbooks/*.yml; do ansible-playbook --syntax-check -i inventory/lab.ini "$pb"; done
+
+  docker:
+    name: Docker build and smoke test
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: nexus-omnis:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Boot and probe
+        run: |
+          docker run -d --name nexus -p 8000:8000 nexus-omnis:ci
+          for i in $(seq 1 60); do curl -sf localhost:8000/health && break; sleep 2; done
+          curl -sf localhost:8000/health
+          curl -sf localhost:8000/ | grep -q "<title>NEXUS OMNIS</title>"
+          curl -sf localhost:8000/api/auth/config
+      - name: Container logs on failure
+        if: failure()
+        run: docker logs nexus

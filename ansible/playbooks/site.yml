@@ -1,0 +1,14 @@
+- name: Full NEXUS-managed baseline
+  hosts: linux_servers
+  become: true
+  roles: [common, security, ssh, monitoring]
+
+- name: Container hosts
+  hosts: docker_hosts
+  become: true
+  roles: [docker]
+
+- name: NEXUS host agent
+  hosts: linux_servers
+  become: true
+  roles: [nexus-agent]

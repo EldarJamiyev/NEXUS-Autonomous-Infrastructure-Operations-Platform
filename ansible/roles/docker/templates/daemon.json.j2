@@ -1,0 +1,5 @@
+{
+  "live-restore": {{ docker_baseline.live_restore | lower }},
+  "log-driver": "json-file",
+  "log-opts": {"max-size": "{{ docker_baseline.log_max_size }}"}
+}

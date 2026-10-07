@@ -1,0 +1,4 @@
+- name: Restart unit
+  ansible.builtin.service:
+    name: "{{ unit_map[nexus_service] }}"
+    state: restarted

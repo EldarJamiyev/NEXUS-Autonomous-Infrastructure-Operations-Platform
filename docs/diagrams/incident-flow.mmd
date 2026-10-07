@@ -1,0 +1,12 @@
+flowchart LR
+  AL[Alert] --> VAL{Valid against current state?}
+  VAL -->|no| STALE[STALE - discarded]
+  VAL -->|yes| COR{Related open incident?}
+  COR -->|graph-connected| ATT[Attach as symptom]
+  COR -->|no| NEW[New incident + impact + triage P1-P4]
+  ATT --> RCA[Deterministic root cause]
+  NEW --> RCA
+  RCA --> PLAN[Plan for root cause] --> DEC[Decision]
+  DEC --> TX[Transaction] --> RES{Symptoms cleared?}
+  RES -->|yes| R[RESOLVED]
+  RES -->|no| MIT[MITIGATED]

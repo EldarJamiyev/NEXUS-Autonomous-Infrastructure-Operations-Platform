@@ -1,0 +1,339 @@
+# NEXUS remediation catalog. Only actions listed here can ever run, and only through the
+# command templates in executor.py (strict allowlist, validated parameters, no shell).
+# category: SAFE (automatic) | REVERSIBLE (automatic if confidence high) | HIGH_IMPACT (approval) | CRITICAL (approval)
+# Parameters written as "$name" are filled from the transaction parameters.
+actions:
+  - id: REM-SVC-RESTART-NGINX
+    name: Restart nginx
+    description: Restart the nginx unit after confirming its configuration is valid.
+    category: SAFE
+    risk: LOW
+    permission: ENGINEER
+    base_confidence: 98
+    preconditions: [{check: service_not_running, service: nginx}, {check: config_valid, component: nginx}, {check: device_reachable}]
+    backup: service_state
+    execution: [{op: service_restart, service: nginx}]
+    verification: [{probe: service_running, service: nginx}, {probe: tcp, port: 443}, {probe: http, port: 443, expect: 200}]
+    rollback: not_required
+    timeout: 30
+  - id: REM-SVC-RESTART-SSH
+    name: Restart OpenSSH
+    description: Restart sshd after a successful configuration syntax test.
+    category: SAFE
+    risk: LOW
+    permission: ENGINEER
+    base_confidence: 97
+    preconditions: [{check: service_not_running, service: ssh}, {check: config_valid, component: ssh}, {check: device_reachable}]
+    backup: service_state
+    execution: [{op: config_test, component: ssh}, {op: service_restart, service: ssh}]
+    verification: [{probe: config_valid, component: ssh}, {probe: service_running, service: ssh}, {probe: tcp, port: 22}]
+    rollback: not_required
+    timeout: 30
+  - id: REM-SVC-RESTART-DOCKER
+    name: Start Docker engine
+    description: Start a stopped Docker engine (containers with restart policies come back).
+    category: SAFE
+    risk: LOW
+    permission: ENGINEER
+    base_confidence: 95
+    preconditions: [{check: service_not_running, service: docker}, {check: device_reachable}]
+    backup: service_state
+    execution: [{op: service_restart, service: docker}]
+    verification: [{probe: service_running, service: docker}]
+    rollback: not_required
+    timeout: 60
+  - id: REM-SVC-RESTART-MONAGENT
+    name: Restart monitoring agent
+    description: Restart node_exporter (Linux) or windows_exporter (Windows).
+    category: SAFE
+    risk: LOW
+    permission: OPERATOR
+    base_confidence: 98
+    preconditions: [{check: service_not_running, service: monitoring-agent}, {check: device_reachable}]
+    backup: service_state
+    execution: [{op: service_restart, service: monitoring-agent}]
+    verification: [{probe: service_running, service: monitoring-agent}, {probe: monitoring_target_up}]
+    rollback: not_required
+    timeout: 30
+  - id: REM-SVC-RESTART-DNS
+    name: Restart DNS Server service
+    description: Restart the Windows DNS Server service on the domain controller. Safe because the service is verified down first.
+    category: SAFE
+    risk: MEDIUM
+    permission: ENGINEER
+    base_confidence: 96
+    preconditions: [{check: service_not_running, service: dns}, {check: device_reachable}]
+    backup: service_state
+    execution: [{op: service_restart, service: dns}]
+    verification: [{probe: service_running, service: dns}, {probe: tcp, port: 53}, {probe: dns_resolves, name: dc01.corp.nexus.lab}]
+    rollback: not_required
+    timeout: 60
+  - id: REM-SVC-RESTART-NTP
+    name: Restart W32Time and resynchronise
+    description: Start the Windows Time service and force a resync with the configured NTP source.
+    category: SAFE
+    risk: LOW
+    permission: ENGINEER
+    base_confidence: 95
+    preconditions: [{check: device_reachable}]
+    backup: service_state
+    execution: [{op: service_restart, service: ntp}, {op: w32tm_resync}]
+    verification: [{probe: service_running, service: ntp}, {probe: ntp_skew_below, seconds: 1}]
+    rollback: not_required
+    timeout: 60
+  - id: REM-SVC-ENABLE
+    name: Re-enable required service
+    description: Re-enable and start a unit that the baseline requires (systemctl enable --now).
+    category: REVERSIBLE
+    risk: LOW
+    permission: ENGINEER
+    base_confidence: 93
+    preconditions: [{check: device_reachable}]
+    backup: config
+    backup_component: services
+    execution: [{op: service_enable, service: $service}]
+    verification: [{probe: service_enabled, service: $service}, {probe: service_running, service: $service}, {probe: config_matches, component: services}]
+    rollback: restore_backup
+    timeout: 60
+  - id: REM-DISK-ROTATE-LOGS
+    name: Rotate known logs
+    description: Force logrotate for an approved log set. Never deletes arbitrary files.
+    category: SAFE
+    risk: LOW
+    permission: OPERATOR
+    base_confidence: 94
+    preconditions: [{check: disk_above, threshold: 85}, {check: device_reachable}]
+    backup: none
+    execution: [{op: logrotate, name: $logset}]
+    verification: [{probe: disk_below, threshold: 85}]
+    rollback: not_required
+    timeout: 120
+  - id: REM-DISK-CLEAN-TMP
+    name: Remove approved temporary files
+    description: Delete files older than 7 days under approved temporary paths only.
+    category: SAFE
+    risk: LOW
+    permission: OPERATOR
+    base_confidence: 92
+    preconditions: [{check: disk_above, threshold: 80}, {check: device_reachable}]
+    backup: none
+    execution: [{op: clean_tmp, path: /var/tmp/nexus-approved, days: 7}]
+    verification: [{probe: disk_below, threshold: 90}]
+    rollback: not_required
+    timeout: 120
+  - id: REM-CFG-RESTORE-SSH
+    name: Restore SSH baseline
+    description: Back up sshd_config, write the Git baseline, validate with sshd -t, reload, verify; roll back on any failure.
+    category: REVERSIBLE
+    risk: MEDIUM
+    permission: ENGINEER
+    base_confidence: 91
+    preconditions: [{check: device_reachable}]
+    backup: config
+    backup_component: ssh
+    execution: [{op: restore_config, component: ssh}, {op: config_test, component: ssh}, {op: service_reload, service: ssh}]
+    verification: [{probe: config_valid, component: ssh}, {probe: service_running, service: ssh}, {probe: tcp, port: 22}, {probe: config_matches, component: ssh}]
+    rollback: restore_backup
+    timeout: 60
+  - id: REM-CFG-RESTORE-NGINX
+    name: Restore Nginx baseline
+    description: Back up the site config, write the Git baseline, nginx -t, restart, verify HTTP; roll back on failure.
+    category: REVERSIBLE
+    risk: MEDIUM
+    permission: ENGINEER
+    base_confidence: 93
+    preconditions: [{check: device_reachable}]
+    backup: config
+    backup_component: nginx
+    execution: [{op: restore_config, component: nginx}, {op: config_test, component: nginx}, {op: service_restart, service: nginx}]
+    verification: [{probe: config_matches, component: nginx}, {probe: service_running, service: nginx}, {probe: tcp, port: 443}, {probe: http, port: 443, expect: 200}]
+    rollback: restore_backup
+    timeout: 60
+  - id: REM-CFG-RESTORE-DOCKER
+    name: Restore Docker daemon baseline
+    description: Write daemon.json from Git and restart Docker. Restarting Docker bounces every container, hence approval.
+    category: HIGH_IMPACT
+    risk: MEDIUM
+    permission: ENGINEER
+    base_confidence: 90
+    preconditions: [{check: device_reachable}]
+    backup: config
+    backup_component: docker
+    execution: [{op: restore_config, component: docker}, {op: service_restart, service: docker}]
+    verification: [{probe: service_running, service: docker}, {probe: config_matches, component: docker}]
+    rollback: restore_backup
+    timeout: 120
+  - id: REM-CFG-RESTORE-MONITORING
+    name: Restore monitoring configuration
+    description: Restore exporter configuration from Git and restart the agent.
+    category: REVERSIBLE
+    risk: LOW
+    permission: OPERATOR
+    base_confidence: 95
+    preconditions: [{check: device_reachable}]
+    backup: config
+    backup_component: monitoring
+    execution: [{op: restore_config, component: monitoring}, {op: service_restart, service: monitoring-agent}]
+    verification: [{probe: config_matches, component: monitoring}, {probe: monitoring_target_up}]
+    rollback: restore_backup
+    timeout: 60
+  - id: REM-FILE-PERMISSIONS
+    name: Restore file permissions
+    description: chmod sensitive files back to the baseline modes.
+    category: REVERSIBLE
+    risk: LOW
+    permission: ENGINEER
+    base_confidence: 94
+    preconditions: [{check: device_reachable}]
+    backup: config
+    backup_component: files
+    execution: [{op: restore_config, component: files}]
+    verification: [{probe: config_matches, component: files}]
+    rollback: restore_backup
+    timeout: 30
+  - id: REM-WIN-BASELINE
+    name: Restore Windows security baseline
+    description: Invoke-NexusWindowsRemediation.ps1 for the drifted settings (SMBv1, firewall profiles, NLA, audit policy).
+    category: HIGH_IMPACT
+    risk: MEDIUM
+    permission: ENGINEER
+    base_confidence: 88
+    preconditions: [{check: device_reachable}]
+    backup: config
+    backup_component: windows
+    execution: [{op: win_baseline, setting: all}]
+    verification: [{probe: config_matches, component: windows}]
+    rollback: restore_backup
+    timeout: 180
+  - id: REM-CFG-RESTORE-FIREWALL
+    name: Restore firewall baseline
+    description: Back up the ruleset, remove rules not in intent, re-add missing ones, verify by policy tests; roll back on failure.
+    category: REVERSIBLE
+    risk: MEDIUM
+    permission: ENGINEER
+    base_confidence: 94
+    preconditions: [{check: firewall_available}]
+    backup: firewall
+    execution: [{op: firewall_reconcile}]
+    verification: [{probe: firewall_matches_desired}, {probe: management_path}, {probe: unauthorized_flow_denied}]
+    rollback: firewall_restore
+    timeout: 60
+  - id: REM-NET-RESTORE-VLAN
+    name: Restore switchport VLAN
+    description: Move the access port back to the VLAN in baselines/network.yaml and verify the endpoint re-addresses.
+    category: REVERSIBLE
+    risk: MEDIUM
+    permission: ENGINEER
+    base_confidence: 92
+    preconditions: [{check: device_known}]
+    backup: network_state
+    execution: [{op: switchport_vlan, vlan: $vlan}]
+    verification: [{probe: in_vlan, vlan: $vlan}, {probe: address_in_vlan, vlan: $vlan}]
+    rollback: network_restore
+    timeout: 60
+  - id: REM-NET-QUARANTINE
+    name: Quarantine device
+    description: Move the endpoint to VLAN 99 (isolated by FW-020), revoke its leases, verify it cannot reach servers.
+    category: HIGH_IMPACT
+    risk: MEDIUM
+    permission: ENGINEER
+    base_confidence: 92
+    preconditions: [{check: device_not_quarantined}, {check: switchport_known}]
+    backup: network_state
+    execution: [{op: switchport_vlan, vlan: 99}, {op: revoke_device_leases}]
+    verification: [{probe: in_vlan, vlan: 99}, {probe: policy_test, destination: LINUX01, port: 22, expect: DENY}, {probe: no_active_leases}]
+    rollback: network_restore
+    timeout: 60
+  - id: REM-NET-RELEASE-QUARANTINE
+    name: Release quarantine
+    description: Return the device to its pre-quarantine VLAN after human review.
+    category: HIGH_IMPACT
+    risk: MEDIUM
+    permission: OPERATOR
+    base_confidence: 90
+    preconditions: [{check: device_quarantined}]
+    backup: network_state
+    execution: [{op: switchport_vlan, vlan: previous}]
+    verification: [{probe: not_in_vlan, vlan: 99}]
+    rollback: network_restore
+    timeout: 60
+  - id: REM-NET-REVOKE-LEASE
+    name: Revoke access lease
+    description: Revoke a lease and verify its firewall rule is gone.
+    category: SAFE
+    risk: LOW
+    permission: OPERATOR
+    base_confidence: 99
+    preconditions: [{check: firewall_available}]
+    backup: none
+    execution: [{op: revoke_lease, lease: $lease}]
+    verification: [{probe: lease_rule_absent, lease: $lease}]
+    rollback: not_required
+    timeout: 30
+  - id: REM-NET-BLOCK-PORT
+    name: Block unexpected service at the firewall
+    description: Insert a containment rule denying user VLAN access to an unexpected listening port; verify by policy test.
+    category: REVERSIBLE
+    risk: LOW
+    permission: ENGINEER
+    base_confidence: 90
+    preconditions: [{check: firewall_available}]
+    backup: firewall
+    execution: [{op: firewall_block, port: $port}]
+    verification: [{probe: port_blocked, port: $port}, {probe: management_path}]
+    rollback: firewall_restore
+    timeout: 30
+  - id: REM-NET-DHCP-RECLAIM
+    name: Reclaim stale DHCP leases
+    description: Release DHCP leases that expired but were never reclaimed (pfSense dhcpd).
+    category: SAFE
+    risk: LOW
+    permission: OPERATOR
+    base_confidence: 93
+    preconditions: [{check: firewall_available}]
+    backup: none
+    execution: [{op: dhcp_reclaim, vlan: $vlan}]
+    verification: [{probe: dhcp_pool_below, vlan: $vlan, threshold: 85}]
+    rollback: not_required
+    timeout: 30
+  - id: REM-DOCKER-RESTART-PORTAL
+    name: Restart portal container
+    description: Restart the portal container to stop a runaway worker. Brief user-visible outage, hence approval.
+    category: HIGH_IMPACT
+    risk: MEDIUM
+    permission: ENGINEER
+    base_confidence: 88
+    preconditions: [{check: device_reachable}]
+    backup: service_state
+    execution: [{op: docker_restart, container: portal}]
+    verification: [{probe: cpu_below, threshold: 80}, {probe: http, port: 8080, expect: 200}]
+    rollback: not_required
+    timeout: 120
+  - id: REM-CERT-RENEW
+    name: Renew certificate (manual)
+    description: NEXUS never renews certificates automatically in the demo. A human renews via the internal CA.
+    category: CRITICAL
+    risk: HIGH
+    permission: ENGINEER
+    base_confidence: 50
+    manual_only: true
+    preconditions: []
+    backup: none
+    execution: []
+    verification: []
+    rollback: not_required
+    timeout: 0
+  - id: REM-HUMAN-INVESTIGATE
+    name: Human investigation
+    description: No safe automated action exists for this condition. Escalate with evidence.
+    category: CRITICAL
+    risk: HIGH
+    permission: ENGINEER
+    base_confidence: 52
+    manual_only: true
+    preconditions: []
+    backup: none
+    execution: []
+    verification: []
+    rollback: not_required
+    timeout: 0

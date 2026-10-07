@@ -1,0 +1,17 @@
+- name: node_exporter installed
+  ansible.builtin.apt:
+    name: prometheus-node-exporter
+    state: present
+- name: node_exporter listens on the baseline port
+  ansible.builtin.lineinfile:
+    path: /etc/default/prometheus-node-exporter
+    regexp: '^ARGS='
+    line: 'ARGS="--web.listen-address=:{{ node_exporter_port }}"'
+    create: true
+    mode: "0644"
+  notify: Restart node_exporter
+- name: node_exporter enabled and running
+  ansible.builtin.service:
+    name: prometheus-node-exporter
+    state: started
+    enabled: true

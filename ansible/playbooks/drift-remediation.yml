@@ -1,0 +1,13 @@
+# Restore one component to the Git baseline: ansible-playbook playbooks/drift-remediation.yml -l LINUX01 -e component=ssh
+- name: Drift remediation
+  hosts: linux_servers
+  become: true
+  vars:
+    component: ssh
+  tasks:
+    - name: Component is supported
+      ansible.builtin.assert:
+        that: component in ['ssh', 'docker', 'monitoring', 'security']
+    - name: Apply the component baseline
+      ansible.builtin.include_role:
+        name: "{{ component }}"

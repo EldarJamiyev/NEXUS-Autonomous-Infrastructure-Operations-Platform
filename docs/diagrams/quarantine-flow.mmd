@@ -1,0 +1,10 @@
+flowchart TB
+  MAC[Unknown MAC on Gi1/0/14] --> DIS[DEVICE_DISCOVERED]
+  DIS --> IDN[Identity confidence ~5%: no AD object, unknown MAC, no DNS]
+  IDN --> R1[Risk ~70]
+  ACT[TCP/22 attempts blocked by default deny] --> R2[Risk > 80]
+  R1 --> R2
+  R2 --> POL{SECURITY-004: identity UNKNOWN, risk ≥ 80, not protected}
+  POL -->|unmanaged endpoint, autonomy ≥ 3| TX[Quarantine transaction]
+  POL -->|managed asset| APR[Approval, or autonomy 5]
+  TX --> V1[Switchport → VLAN 99] --> V2[Leases revoked] --> V3[Policy test: TCP/22 to LINUX01 = DENY] --> MIT[Incident MITIGATED]

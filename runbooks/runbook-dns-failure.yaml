@@ -1,0 +1,14 @@
+id: runbook-dns-failure
+title: DNS failure
+trigger: {alert: DNSServiceDown}
+target: DC01
+diagnostics:
+  - {probe: service_running, service: dns, description: "Is the DNS Server service running on DC01?"}
+  - {probe: tcp, port: 53, description: "Does DC01 answer on TCP/53?"}
+  - {probe: dns_resolves, name: dc01.corp.nexus.lab, description: "Do lookups succeed?"}
+preconditions: [Service verified down, DC01 reachable]
+actions:
+  - {action: REM-SVC-RESTART-DNS, when: service stopped}
+verification: [Service running, TCP/53 reachable, Lookups succeed, Correlated AD/portal symptoms clear]
+rollback: Not required - restarting a verified-down service cannot reduce availability.
+escalation: Service fails to stay up - check DNS event log (Event 4000/4013) and AD replication.

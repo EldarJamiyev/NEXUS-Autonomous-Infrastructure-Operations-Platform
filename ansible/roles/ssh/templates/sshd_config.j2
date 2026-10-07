@@ -1,0 +1,12 @@
+# Managed by NEXUS OMNIS (ansible/roles/ssh). Local edits are reported as drift.
+Port {{ ssh_baseline.port }}
+PermitRootLogin {{ ssh_baseline.permit_root_login }}
+PasswordAuthentication {{ ssh_baseline.password_authentication }}
+MaxAuthTries {{ ssh_baseline.max_auth_tries }}
+X11Forwarding {{ ssh_baseline.x11_forwarding }}
+HostKey /etc/ssh/ssh_host_ed25519_key
+KbdInteractiveAuthentication no
+UsePAM yes
+PrintMotd no
+AcceptEnv LANG LC_*
+Subsystem sftp /usr/lib/openssh/sftp-server

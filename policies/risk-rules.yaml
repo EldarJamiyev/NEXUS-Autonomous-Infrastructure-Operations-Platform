@@ -1,0 +1,22 @@
+apiVersion: nexus.omnis/v1
+kind: RiskRules
+metadata:
+  id: POL-RISK-RULES
+  name: Risk scoring and trust decay rules
+  owner: GG-NETWORK-ADMIN
+  description: Prototype rules - deterministic, explainable, tunable. Omitted keys fall back to built-in defaults.
+spec:
+  levels:
+    - {min: 80, level: CRITICAL}
+    - {min: 60, level: HIGH}
+    - {min: 30, level: MEDIUM}
+    - {min: 0, level: LOW}
+  trust:
+    verified_behavior: 1
+    minor_anomaly: -5
+    identity_mismatch: -15
+    critical_incident: -30
+    initial_known: 92
+    initial_unknown: 50
+    max: 100
+  window_minutes: 15

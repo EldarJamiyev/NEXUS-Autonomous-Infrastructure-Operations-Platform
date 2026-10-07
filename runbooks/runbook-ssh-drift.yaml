@@ -1,0 +1,14 @@
+id: runbook-ssh-drift
+title: SSH configuration drift
+trigger: {drift: ssh.*}
+target: LINUX01
+diagnostics:
+  - {probe: config_matches, component: ssh, description: "Does sshd_config match Git intent?"}
+  - {probe: config_valid, component: ssh, description: "Does sshd -t pass?"}
+  - {probe: tcp, port: 22, description: "Is SSH reachable?"}
+preconditions: [Backup of current sshd_config, Management access path independent of SSH (console / FW-010)]
+actions:
+  - {action: REM-CFG-RESTORE-SSH, when: drift classified SECURITY or OPERATIONAL}
+verification: [sshd -t passes, ssh unit active, TCP/22 reachable, checksum equals intent]
+rollback: Automatic restore of the backed-up sshd_config if any verification step fails.
+escalation: Rollback executed or drift reappears within 24 h - investigate who changes sshd_config (FIM actor in the audit trail).

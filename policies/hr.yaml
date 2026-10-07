@@ -1,0 +1,31 @@
+apiVersion: nexus.omnis/v1
+kind: AccessPolicy
+metadata:
+  id: POL-HR
+  name: HR systems
+  owner: GG-HR
+  description: HR application access. Note the deny below is shadowed by baseline rule FW-130 (intentional demo finding).
+spec:
+  subjects:
+    groups: [GG-HR]
+  conditions:
+    min_identity_confidence: 80
+    max_device_risk: 40
+    source_vlans: [30]
+    device_kinds: [workstation]
+  grants:
+    - destinations: [APP01]
+      protocol: TCP
+      ports: [8444]
+      lease_minutes: 240
+  denies:
+    - destinations: [APP01]
+      protocol: TCP
+      ports: [8443]
+      reason: HR must not reach the finance reporting console
+  schedule:
+    windows:
+      - days: [mon, tue, wed, thu, fri]
+        start: "08:00"
+        end: "19:00"
+    outside: deny

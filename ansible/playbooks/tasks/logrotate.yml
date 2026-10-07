@@ -1,0 +1,4 @@
+- name: Force rotation of an approved log set
+  ansible.builtin.command: "logrotate -f /etc/logrotate.d/{{ nexus_name }}"
+  when: nexus_name in ['nginx', 'portal', 'rsyslog']
+  changed_when: true

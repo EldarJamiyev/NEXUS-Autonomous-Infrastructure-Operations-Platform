@@ -1,0 +1,5 @@
+- name: Enable and start unit
+  ansible.builtin.service:
+    name: "{{ unit_map[nexus_service] }}"
+    state: started
+    enabled: true

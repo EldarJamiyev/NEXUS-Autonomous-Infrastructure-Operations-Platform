@@ -1,0 +1,23 @@
+flowchart LR
+  subgraph browser[Browser]
+    UI[React console]
+  end
+  subgraph nexus[nexus container]
+    API[FastAPI REST + WebSocket]
+    CP[Control plane loops]
+    ENG[Engines]
+    DB[(SQLite /data/nexus.db)]
+    API --- ENG --- DB
+    CP --- ENG
+  end
+  subgraph obs[observability profile]
+    P[Prometheus] --> A[Alertmanager]
+    G[Grafana]
+    L[Loki] --- PT[Promtail]
+  end
+  UI <-->|HTTP + WS| API
+  P -->|scrape /metrics| API
+  A -->|POST /api/alerts/alertmanager| API
+  PT -->|reads /data/logs| DB
+  G --> P
+  G --> L

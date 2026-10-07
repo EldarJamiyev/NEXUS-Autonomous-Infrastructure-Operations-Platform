@@ -1,0 +1,33 @@
+#!/usr/bin/env python3
+"""NEXUS host agent: reports observed configuration to NEXUS (POST /api/ingest/config-report).
+Read-only on the host. Managed by ansible/roles/nexus-agent."""
+import json, os, socket, subprocess, urllib.request
+
+URL = os.environ["NEXUS_URL"].rstrip("/") + "/api/ingest/config-report"
+KEY = os.environ["NEXUS_API_KEY"]
+HOST = os.environ.get("NEXUS_DEVICE", socket.gethostname().upper())
+UNITS = {"nginx": "nginx", "ssh": "ssh", "docker": "docker", "monitoring-agent": "prometheus-node-exporter"}
+
+
+def run(cmd):
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=15, check=False).stdout
+
+
+def ssh():
+    vals = dict(line.split(" ", 1) for line in run(["sshd", "-T"]).splitlines() if " " in line)
+    return {"PermitRootLogin": vals.get("permitrootlogin"), "PasswordAuthentication": vals.get("passwordauthentication"),
+            "Port": int(vals.get("port", 22)), "MaxAuthTries": int(vals.get("maxauthtries", 6)), "X11Forwarding": vals.get("x11forwarding"),
+            "HostKey": vals.get("hostkey")}
+
+
+def services():
+    return {name: {"enabled": run(["systemctl", "is-enabled", unit]).strip() == "enabled"} for name, unit in UNITS.items()
+            if run(["systemctl", "list-unit-files", f"{unit}.service"]).count(unit)}
+
+
+reports = [{"device": HOST, "component": "ssh", "actual": ssh()}, {"device": HOST, "component": "services", "actual": services()}]
+if os.path.exists("/etc/docker/daemon.json"):
+    reports.append({"device": HOST, "component": "docker", "actual": json.load(open("/etc/docker/daemon.json"))})
+req = urllib.request.Request(URL, data=json.dumps(reports).encode(), method="POST",
+                             headers={"Content-Type": "application/json", "Authorization": f"Bearer {KEY}"})
+print(urllib.request.urlopen(req, timeout=15).read().decode())

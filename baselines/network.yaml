@@ -1,0 +1,12 @@
+# Switchport / VLAN intent for SW-CORE01 access ports.
+apiVersion: nexus.omnis/v1
+kind: NetworkBaseline
+switch: SW-CORE01
+switchports:
+  Gi1/0/2: {device: DC01, vlan: 20}
+  Gi1/0/3: {device: LINUX01, vlan: 20}
+  Gi1/0/4: {device: APP01, vlan: 20}
+  Gi1/0/5: {device: MON01, vlan: 40}
+  Gi1/0/11: {device: PC-023, vlan: 30}
+  Gi1/0/12: {device: PC-024, vlan: 30}
+  Gi1/0/13: {device: PC-025, vlan: 30}

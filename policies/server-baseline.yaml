@@ -1,0 +1,28 @@
+apiVersion: nexus.omnis/v1
+kind: BaselinePolicy
+metadata:
+  id: POL-SERVER-BASELINE
+  name: Server configuration baseline
+  owner: GG-SYSTEM-ADMIN
+  description: Desired state lives in Git under baselines/. This policy classifies drift and maps it to remediations.
+spec:
+  intent_source: baselines/
+  access_constraints:
+    ssh_allowed_groups: [GG-NETWORK-ADMIN, GG-SYSTEM-ADMIN]
+    rdp_allowed_groups: [GG-NETWORK-ADMIN, GG-SYSTEM-ADMIN]
+  drift_classification:
+    - {match: "ssh.permit_root_login", class: SECURITY, risk: 75, action: REM-CFG-RESTORE-SSH}
+    - {match: "ssh.password_authentication", class: SECURITY, risk: 60, action: REM-CFG-RESTORE-SSH}
+    - {match: "ssh.*", class: OPERATIONAL, risk: 30, action: REM-CFG-RESTORE-SSH}
+    - {match: "firewall.unauthorized_rule*", class: CRITICAL, risk: 85, action: REM-CFG-RESTORE-FIREWALL}
+    - {match: "firewall.missing_rule*", class: OPERATIONAL, risk: 40, action: REM-CFG-RESTORE-FIREWALL}
+    - {match: "nginx.*", class: OPERATIONAL, risk: 40, action: REM-CFG-RESTORE-NGINX}
+    - {match: "docker.*", class: OPERATIONAL, risk: 30, action: REM-CFG-RESTORE-DOCKER}
+    - {match: "services.*", class: OPERATIONAL, risk: 35, action: REM-SVC-ENABLE}
+    - {match: "monitoring.*", class: OPERATIONAL, risk: 45, action: REM-CFG-RESTORE-MONITORING}
+    - {match: "files.*", class: SECURITY, risk: 50, action: REM-FILE-PERMISSIONS}
+    - {match: "windows.*", class: SECURITY, risk: 60, action: REM-WIN-BASELINE}
+    - {match: "network.vlan", class: SECURITY, risk: 55, action: REM-NET-RESTORE-VLAN}
+    - {match: "motd.*", class: COSMETIC, risk: 5, action: null}
+    - {match: "*", class: OPERATIONAL, risk: 20, action: null}
+  incident_classes: [SECURITY, CRITICAL]

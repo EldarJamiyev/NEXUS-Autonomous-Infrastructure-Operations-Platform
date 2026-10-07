@@ -1,0 +1,16 @@
+- name: Docker engine installed
+  ansible.builtin.apt:
+    name: docker.io
+    state: present
+- name: daemon.json from baseline
+  ansible.builtin.template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    mode: "0644"
+    backup: true
+  notify: Restart docker
+- name: Docker enabled and running
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true

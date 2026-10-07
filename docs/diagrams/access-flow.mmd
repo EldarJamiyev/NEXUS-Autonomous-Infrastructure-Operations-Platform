@@ -1,0 +1,16 @@
+flowchart TB
+  REQ[Access request: user, device, destination, port] --> S{AD session on device?}
+  S -->|no| DENY[DENY]
+  S -->|yes| Q{Device quarantined?}
+  Q -->|yes| DENY
+  Q -->|no| D{Explicit deny?}
+  D -->|yes| DENY
+  D -->|no| G{Grant in an access policy?}
+  G -->|no| DENY
+  G -->|yes| C{Identity, device risk, user risk, VLAN, device type}
+  C -->|fail| DENY
+  C -->|pass| FW{Firewall API available?}
+  FW -->|no| BLOCKED[BLOCKED - no new privileged leases]
+  FW -->|yes| T{Inside schedule window? Grant needs approval?}
+  T -->|approval| APR[APPROVAL_REQUIRED - second engineer]
+  T -->|ok| L[Lease created] --> R[Firewall rule] --> V[Rule verified] --> ACT[ACTIVE until expiry, logoff or risk breach]

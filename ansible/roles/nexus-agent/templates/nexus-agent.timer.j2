@@ -1,0 +1,9 @@
+[Unit]
+Description=Run the NEXUS agent every {{ nexus_agent_interval }}
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec={{ nexus_agent_interval }}
+
+[Install]
+WantedBy=timers.target

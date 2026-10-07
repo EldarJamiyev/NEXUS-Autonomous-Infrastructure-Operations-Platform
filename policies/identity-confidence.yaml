@@ -1,0 +1,22 @@
+apiVersion: nexus.omnis/v1
+kind: IdentitySignals
+metadata:
+  id: POL-IDENTITY-SIGNALS
+  name: Identity confidence signals
+  owner: GG-NETWORK-ADMIN
+  description: Configurable prototype heuristic. These weights are not a statistical model.
+spec:
+  signals:
+    ad_computer_match: 25
+    ad_user_session: 20
+    dhcp_hostname: 15
+    dns_match: 10
+    known_mac: 15
+    expected_vlan: 10
+    monitoring_presence: 5
+  levels:
+    - {min: 95, level: TRUSTED}
+    - {min: 80, level: VERIFIED}
+    - {min: 60, level: UNCERTAIN}
+    - {min: 40, level: SUSPICIOUS}
+    - {min: 0, level: UNKNOWN}

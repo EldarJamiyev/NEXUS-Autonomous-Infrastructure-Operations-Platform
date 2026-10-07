@@ -1,0 +1,1 @@
+{"user_id": "eldar", "device_id": "PC-023", "destination": "LINUX01", "port": 22, "protocol": "TCP", "reason": "Patch nginx", "duration_minutes": 30}

@@ -1,0 +1,19 @@
+apiVersion: nexus.omnis/v1
+kind: AccessPolicy
+metadata:
+  id: POL-MANAGEMENT
+  name: Management dashboards
+  owner: GG-MANAGEMENT
+  description: Read-only Grafana dashboards for the management team.
+spec:
+  subjects:
+    groups: [GG-MANAGEMENT]
+  conditions:
+    min_identity_confidence: 60
+    max_device_risk: 60
+    source_vlans: [30]
+  grants:
+    - destinations: [MON01]
+      protocol: TCP
+      ports: [3000]
+      lease_minutes: 480

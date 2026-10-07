@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tokens are RGB triplets so Tailwind opacity modifiers work (bg-ok/15). Light by default, dark when the
+   system prefers it, and a pinned override via [data-theme] (two-state toggle persisted in localStorage). */
+:root {
+  color-scheme: light dark;
+  --bg: 242 244 247; --panel: 255 255 255; --inset: 247 249 251; --line: 214 221 229; --ink: 22 32 42; --muted: 88 102 117;
+  --accent: 104 78 214; --ok: 28 133 89; --info: 44 115 190; --warn: 160 118 0; --high: 201 92 24; --crit: 196 50 43; --unk: 118 131 145;
+  accent-color: rgb(var(--accent));
+  scrollbar-color: rgb(var(--line)) transparent;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: 12 18 25; --panel: 19 27 36; --inset: 24 34 45; --line: 37 49 64; --ink: 220 227 234; --muted: 139 153 169;
+    --accent: 156 135 255; --ok: 69 192 138; --info: 90 162 238; --warn: 232 185 49; --high: 242 140 69; --crit: 240 96 90; --unk: 125 138 151;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: 12 18 25; --panel: 19 27 36; --inset: 24 34 45; --line: 37 49 64; --ink: 220 227 234; --muted: 139 153 169;
+  --accent: 156 135 255; --ok: 69 192 138; --info: 90 162 238; --warn: 232 185 49; --high: 242 140 69; --crit: 240 96 90; --unk: 125 138 151;
+}
+:root[data-theme="light"] { color-scheme: light; }
+
+html, body, #root { height: 100%; }
+body { @apply bg-bg text-ink font-sans antialiased; font-size: 14px; line-height: 20px; }
+.num, .font-mono { font-variant-numeric: tabular-nums; }
+*:focus-visible { outline: 2px solid rgb(var(--accent)); outline-offset: 2px; border-radius: 3px; }
+::selection { background: rgb(var(--accent) / 0.25); }
+h1, h2, h3 { text-wrap: balance; }
+
+dialog { color: inherit; }
+dialog::backdrop { background: rgb(8 12 18 / 0.55); backdrop-filter: blur(2px); }
+dialog.drawer { margin: 0 0 0 auto; height: 100dvh; max-height: 100dvh; width: min(560px, 100vw); border-left: 1px solid rgb(var(--line)); }
+dialog.drawer[open] { animation: drawer-in 160ms ease-out; }
+@keyframes drawer-in { from { transform: translateX(24px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+
+.react-flow__background { background: rgb(var(--inset)); }
+.react-flow__controls button { background: rgb(var(--panel)); color: rgb(var(--ink)); border-color: rgb(var(--line)); }
+.react-flow__controls button svg { fill: currentColor; }
+.react-flow__attribution { display: none; }
+.react-flow__edge-path { stroke: rgb(var(--line)); stroke-width: 1.4; }
+.react-flow__minimap { background: rgb(var(--panel)); }
+
+@keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgb(var(--crit) / 0.55); } 70% { box-shadow: 0 0 0 9px rgb(var(--crit) / 0); } 100% { box-shadow: 0 0 0 0 rgb(var(--crit) / 0); } }
+.pulse-crit { animation: pulse-ring 1.8s ease-out infinite; }
+@keyframes phase-flash { from { background: rgb(var(--accent)); color: rgb(var(--panel)); } to { } }
+.phase-flash { animation: phase-flash 1.6s ease-out; }
+@keyframes step-run { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.step-running { animation: step-run 1s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}

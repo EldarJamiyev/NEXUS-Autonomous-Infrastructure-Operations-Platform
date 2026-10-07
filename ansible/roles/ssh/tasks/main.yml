@@ -1,0 +1,15 @@
+- name: sshd_config from baseline (validated with sshd -t before it replaces the file)
+  ansible.builtin.template:
+    src: sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: "0600"
+    backup: true
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Reload ssh
+- name: sshd enabled and running
+  ansible.builtin.service:
+    name: "{{ ssh_service }}"
+    state: started
+    enabled: true

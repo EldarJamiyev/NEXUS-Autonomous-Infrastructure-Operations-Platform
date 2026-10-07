@@ -1,0 +1,15 @@
+# Entry point for NEXUS's optional AnsibleExecutor. Only allowlisted operations run; parameters arrive
+# as validated extra vars (nexus_op, nexus_service, nexus_component, nexus_name, nexus_path, nexus_days).
+- name: NEXUS allowlisted remediation
+  hosts: all
+  become: true
+  gather_facts: false
+  vars:
+    allowed_ops: [service_restart, service_reload, service_enable, config_test, logrotate, clean_tmp, restore_config]
+  tasks:
+    - name: Operation is allowlisted
+      ansible.builtin.assert:
+        that: nexus_op in allowed_ops
+        fail_msg: "{{ nexus_op }} is not an allowlisted NEXUS operation"
+    - name: Run operation
+      ansible.builtin.include_tasks: "tasks/{{ nexus_op }}.yml"

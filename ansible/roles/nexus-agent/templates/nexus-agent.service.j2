@@ -1,0 +1,9 @@
+[Unit]
+Description=NEXUS OMNIS configuration report
+After=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/nexus/agent.env
+ExecStart=/usr/local/bin/nexus-agent
+NoNewPrivileges=true

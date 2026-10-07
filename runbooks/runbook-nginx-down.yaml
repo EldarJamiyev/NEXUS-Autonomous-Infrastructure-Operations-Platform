@@ -1,0 +1,16 @@
+id: runbook-nginx-down
+title: Nginx down
+trigger: {alert: NginxDown}
+target: LINUX01
+diagnostics:
+  - {probe: service_running, service: nginx, description: "Is the nginx unit active?"}
+  - {probe: config_valid, component: nginx, description: "Does nginx -t pass?"}
+  - {probe: tcp, port: 443, description: "Is TCP/443 reachable from the controller?"}
+  - {probe: http, port: 443, expect: 200, description: "Does /healthz answer 200?"}
+preconditions: [Service verified down (never restart a healthy service), Configuration syntax valid]
+actions:
+  - {action: REM-SVC-RESTART-NGINX, when: process down and configuration valid}
+  - {action: REM-CFG-RESTORE-NGINX, when: configuration changed recently or nginx -t fails}
+verification: [systemd active, TCP/443 reachable, HTTP 200 on /healthz]
+rollback: Restart is stateless. Baseline restore keeps a backup and rolls back automatically if verification fails.
+escalation: Two failed attempts within 24 h, or failed verification after rollback - page the on-call network engineer with the transaction record.

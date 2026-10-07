@@ -1,0 +1,29 @@
+route:
+  receiver: nexus
+  group_by: [alertname, device]
+  group_wait: 5s
+  group_interval: 30s
+  repeat_interval: 1h
+  routes:
+    - matchers: [source="nexus-self"]
+      receiver: humans
+      continue: false
+
+receivers:
+  - name: nexus
+    webhook_configs:
+      - url: http://nexus:8000/api/alerts/alertmanager
+        send_resolved: true
+        # When NEXUS_ALERTMANAGER_TOKEN is set, mount the token and enable:
+        # http_config:
+        #   authorization:
+        #     type: Bearer
+        #     credentials_file: /etc/alertmanager/nexus-token
+  - name: humans
+    # Add your on-call integration here (email_configs, slack_configs or a pager webhook).
+    # With no integration configured these alerts stay visible in the Alertmanager UI only.
+
+inhibit_rules:
+  - source_matchers: [alertname="NodeDown"]
+    target_matchers: [severity=~"warning|critical"]
+    equal: [device]

@@ -1,0 +1,11 @@
+apiVersion: nexus.omnis/v1
+kind: HostBaseline
+server: MON01
+inherits: linux-common
+monitoring:
+  exporter: prometheus
+  scrape_interval: 15s
+  retention: 15d
+  enabled: true
+motd:
+  banner: "Authorised access only. Activity is monitored."

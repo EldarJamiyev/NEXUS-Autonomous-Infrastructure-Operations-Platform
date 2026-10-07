@@ -1,0 +1,4 @@
+- name: Re-apply the component baseline
+  ansible.builtin.include_role:
+    name: "{{ nexus_component }}"
+  when: nexus_component in ['ssh', 'docker', 'monitoring']

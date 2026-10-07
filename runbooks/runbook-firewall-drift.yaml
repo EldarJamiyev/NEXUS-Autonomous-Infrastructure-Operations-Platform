@@ -1,0 +1,13 @@
+id: runbook-firewall-drift
+title: Unauthorized firewall change
+trigger: {drift: firewall.unauthorized_rule*}
+target: PFSENSE
+diagnostics:
+  - {probe: firewall_matches_desired, description: "Does the ruleset equal intent (baseline + leases + containment)?"}
+  - {probe: management_path, description: "Is the management path to pfSense preserved?"}
+preconditions: [Firewall API reachable, Full ruleset backup]
+actions:
+  - {action: REM-CFG-RESTORE-FIREWALL, when: unauthorized or missing rules}
+verification: [Ruleset equals intent, Previously allowed unauthorized flow is now denied, Management path allowed]
+rollback: Full ruleset restored from backup if verification fails.
+escalation: Same actor repeats the change - security review; check pfSense admin accounts and MFA.

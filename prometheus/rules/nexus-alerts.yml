@@ -1,0 +1,60 @@
+# Alert names match NEXUS's internal detector so both sources de-duplicate onto one fingerprint.
+# Rules labelled source="nexus-self" watch NEXUS's own findings; they exist for human routing and
+# NEXUS ignores them on its webhook.
+groups:
+  - name: nexus-infrastructure
+    rules:
+      - alert: NodeDown
+        expr: nexus_sim_node_reachable == 0
+        for: 30s
+        labels: {severity: critical}
+        annotations: {summary: "{{ $labels.device }} is not answering ARP/ICMP"}
+      - alert: DiskSpaceCritical
+        expr: nexus_sim_disk_used_percent >= 90
+        for: 1m
+        labels: {severity: critical}
+        annotations: {summary: "{{ $labels.mount }} on {{ $labels.device }} at {{ $value | printf \"%.0f\" }}%"}
+      - alert: NginxDown
+        expr: nexus_sim_service_up{service="nginx"} == 0
+        for: 15s
+        labels: {severity: critical}
+        annotations: {summary: "nginx is not running on {{ $labels.device }}"}
+      - alert: SSHDown
+        expr: nexus_sim_service_up{service="ssh"} == 0
+        for: 30s
+        labels: {severity: warning}
+        annotations: {summary: "sshd is not running on {{ $labels.device }}"}
+      - alert: MonitoringAgentDown
+        expr: nexus_sim_service_up{service="monitoring-agent"} == 0
+        for: 30s
+        labels: {severity: warning}
+        annotations: {summary: "monitoring agent down on {{ $labels.device }}"}
+      - alert: CertificateExpiring
+        expr: nexus_sim_cert_days_remaining < 14
+        for: 5m
+        labels: {severity: warning}
+        annotations: {summary: "{{ $labels.cn }} expires in {{ $value | printf \"%.0f\" }} days"}
+  - name: nexus-findings
+    rules:
+      - alert: UnexpectedFirewallRule
+        expr: nexus_unexpected_firewall_rules > 0
+        labels: {severity: critical, source: nexus-self, device: PFSENSE}
+        annotations: {summary: "Unauthorized firewall rule present (NEXUS is remediating or awaiting approval)"}
+      - alert: ConfigurationDrift
+        expr: sum(nexus_drift_events{status=~"open|approval_required|failed"}) > 0
+        for: 2m
+        labels: {severity: warning, source: nexus-self, device: NEXUS}
+        annotations: {summary: "{{ $value }} configuration drift event(s) open"}
+      - alert: HighRiskDevice
+        expr: label_replace(nexus_risk_score{entity_type="device"} >= 80, "device", "$1", "entity", "(.*)")
+        labels: {severity: critical, source: nexus-self}
+        annotations: {summary: "{{ $labels.device }} risk score {{ $value }}"}
+      - alert: UnknownDevice
+        expr: nexus_unknown_devices > 0
+        labels: {severity: warning, source: nexus-self, device: SW-CORE01}
+        annotations: {summary: "{{ $value }} device(s) without established identity"}
+      - alert: NexusControllerDown
+        expr: up{job="nexus"} == 0 or nexus_controller_health == 0
+        for: 1m
+        labels: {severity: critical, source: nexus-self, device: NEXUS}
+        annotations: {summary: "NEXUS control plane is not healthy - automation is not running"}

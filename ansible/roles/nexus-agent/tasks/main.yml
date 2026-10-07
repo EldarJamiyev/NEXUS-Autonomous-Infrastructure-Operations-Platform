@@ -1,0 +1,33 @@
+- name: Agent API key provided
+  ansible.builtin.assert:
+    that: nexus_agent_api_key | length > 20
+    fail_msg: Set NEXUS_AGENT_API_KEY (an ENGINEER API key from NEXUS_API_KEYS) in the controller environment
+- name: Agent config directory
+  ansible.builtin.file:
+    path: /etc/nexus
+    state: directory
+    mode: "0750"
+- name: Agent environment (secret, root-only)
+  ansible.builtin.copy:
+    dest: /etc/nexus/agent.env
+    content: "NEXUS_URL={{ nexus_url }}\nNEXUS_API_KEY={{ nexus_agent_api_key }}\nNEXUS_DEVICE={{ inventory_hostname }}\n"
+    mode: "0600"
+  no_log: true
+- name: Agent script
+  ansible.builtin.template:
+    src: nexus-agent.py.j2
+    dest: /usr/local/bin/nexus-agent
+    mode: "0755"
+- name: Agent systemd units
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: "0644"
+  loop: [nexus-agent.service, nexus-agent.timer]
+  notify: Reload systemd
+- name: Agent timer enabled
+  ansible.builtin.systemd:
+    name: nexus-agent.timer
+    state: started
+    enabled: true
+    daemon_reload: true

@@ -1,0 +1,11 @@
+flowchart LR
+  E4624[Windows 4624 logon] --> SES[Session opened]
+  DHCP[DHCP lease] --> IP[IP ↔ MAC]
+  ARP[ARP / switch MAC table] --> IP
+  SES --> CONF[Identity confidence]
+  IP --> CONF
+  ADC[AD computer object] --> CONF
+  DNS[DNS forward record] --> CONF
+  VLAN[Expected VLAN] --> CONF
+  MON[Monitoring presence] --> CONF
+  CONF -->|TRUSTED ≥95 · VERIFIED ≥80 · UNCERTAIN ≥60 · SUSPICIOUS ≥40 · UNKNOWN| RISK[Risk engine]

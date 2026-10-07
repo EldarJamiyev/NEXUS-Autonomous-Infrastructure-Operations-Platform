@@ -1,0 +1,21 @@
+flowchart TB
+  subgraph observe[Observe and normalize]
+    DET[monitoring/detector] --> ALR[incidents/engine: ingest + validate]
+    DISC[network/discovery] --> BUS[[events/bus]]
+    WIN[identity/ingest] --> BUS
+  end
+  ALR --> COR[correlate] --> RCA[incidents/rca] --> PLAN[plan_for]
+  DRIFT[drift/engine] --> PLAN
+  SEC[policy/security] --> ALR
+  PLAN --> DEC[core/decision]
+  DEC -->|AUTOMATE| TX[remediation/runner]
+  DEC -->|APPROVAL| APR[approvals]
+  APR --> TX
+  TX --> EXE[remediation/executor] --> WORLD[simulation/world or real host]
+  TX --> PRB[remediation/verification]
+  TX --> CHAT[chatops/notifier]
+  TX --> AUD[core/audit]
+  RISK[risk/engine] --> SEC
+  IDN[identity/confidence] --> RISK
+  LEASE[leases/engine] --> FW[firewall adapter]
+  POL[policy/evaluator] --> LEASE

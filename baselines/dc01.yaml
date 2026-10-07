@@ -1,0 +1,18 @@
+# Windows Server baseline (checked by Test-NexusWindowsBaseline.ps1 in a real lab).
+apiVersion: nexus.omnis/v1
+kind: HostBaseline
+server: DC01
+windows:
+  smb1_enabled: false
+  firewall_profiles: [Domain, Private, Public]
+  rdp_nla_required: true
+  min_password_length: 14
+  audit_logon_events: true
+  lockout_threshold: 10
+dns:
+  forwarders: [10.10.10.1]
+  scavenging: true
+  zone: corp.nexus.lab
+ntp:
+  source: 10.10.10.1
+  type: NTP

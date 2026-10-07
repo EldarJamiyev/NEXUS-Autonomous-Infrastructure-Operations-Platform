@@ -1,0 +1,131 @@
+# NEXUS OMNIS - simulated enterprise ("CORP / nexus.lab").
+# Fictional demo data. Loaded by `nexus.simulation.seed` into the relational state model.
+# Nothing here describes a real organisation, person or network.
+apiVersion: nexus.omnis/v1
+kind: SimulatedEnterprise
+domain: corp.nexus.lab
+controller:
+  name: NEXUS controller
+  ip: 10.10.10.5
+
+vlans:
+  - {id: 10, name: MANAGEMENT, subnet: 10.10.10.0/24, gateway: 10.10.10.1, purpose: Network and infrastructure management}
+  - {id: 20, name: SERVERS, subnet: 10.20.20.0/24, gateway: 10.20.20.1, purpose: Core servers}
+  - {id: 30, name: USERS, subnet: 10.30.30.0/24, gateway: 10.30.30.1, purpose: Staff workstations, dhcp: {pool_size: 64, in_use: 3, stale: 9}}
+  - {id: 40, name: MONITORING, subnet: 10.40.40.0/24, gateway: 10.40.40.1, purpose: Observability stack}
+  - {id: 50, name: DMZ, subnet: 10.50.50.0/24, gateway: 10.50.50.1, purpose: Reserved for published services}
+  - {id: 99, name: QUARANTINE, subnet: 10.99.99.0/24, gateway: 10.99.99.1, purpose: Isolated endpoints, dhcp: {pool_size: 16, in_use: 0, stale: 0}}
+
+groups:
+  - {id: GG-IT, description: IT department staff}
+  - {id: GG-FINANCE, description: Finance department}
+  - {id: GG-HR, description: Human resources}
+  - {id: GG-MANAGEMENT, description: Management team}
+  - {id: GG-NETWORK-ADMIN, description: Network administrators, privileged: true}
+  - {id: GG-SYSTEM-ADMIN, description: System administrators, privileged: true}
+
+users:
+  - {id: eldar, display_name: Eldar Jamiyev, department: IT, title: Network & Systems Engineer, groups: [GG-IT, GG-NETWORK-ADMIN], console_role: ADMIN, workstation: PC-023}
+  - {id: aysel, display_name: Aysel Aliyeva, department: Finance, title: Financial Analyst, groups: [GG-FINANCE], console_role: VIEWER, workstation: PC-024}
+  - {id: murad, display_name: Murad Hasanov, department: IT, title: System Administrator, groups: [GG-IT, GG-SYSTEM-ADMIN], console_role: ENGINEER, workstation: PC-025}
+  - {id: nigar, display_name: Nigar Karimova, department: HR, title: HR Manager, groups: [GG-HR, GG-MANAGEMENT], console_role: OPERATOR, workstation: null}
+
+devices:
+  - {id: PFSENSE, kind: firewall, os: pfSense CE 2.7.2, role: "Perimeter firewall, inter-VLAN routing, DHCP", vlan: 10, ip: 10.10.10.1, mac: "00:1A:2B:10:00:01", vendor: Netgate, criticality: CRITICAL, ports: [53, 67, 443], location: Rack A1 U40}
+  - {id: SW-CORE01, kind: switch, os: IOS-XE 17.9 (simulated), role: Core access/distribution switch, vlan: 10, ip: 10.10.10.2, mac: "00:1A:2B:10:00:02", vendor: Cisco, criticality: CRITICAL, ports: [22, 161], location: Rack A1 U38}
+  - {id: DC01, kind: server, os: Windows Server 2022, role: "Domain controller (AD DS, DNS, NTP)", vlan: 20, ip: 10.20.20.10, mac: "00:15:5D:20:00:10", vendor: Microsoft Hyper-V, criticality: CRITICAL, ad_computer: true, ports: [53, 88, 123, 389, 445, 636, 9182], location: Rack A2 U10}
+  - {id: LINUX01, kind: server, os: Ubuntu Server 22.04 LTS, role: Nginx reverse proxy and admin jump host, vlan: 20, ip: 10.20.20.20, mac: "00:15:5D:20:00:20", vendor: Microsoft Hyper-V, criticality: HIGH, ad_computer: true, ports: [22, 80, 443, 9100], location: Rack A2 U12}
+  - {id: APP01, kind: server, os: Ubuntu Server 22.04 LTS, role: "Intranet portal, finance and HR apps (Docker)", vlan: 20, ip: 10.20.20.30, mac: "00:15:5D:20:00:30", vendor: Microsoft Hyper-V, criticality: HIGH, ad_computer: true, ports: [22, 5432, 8080, 8443, 8444, 9100], location: Rack A2 U14}
+  - {id: MON01, kind: server, os: Ubuntu Server 22.04 LTS, role: "Monitoring (Prometheus, Grafana, Loki)", vlan: 40, ip: 10.40.40.10, mac: "00:15:5D:40:00:10", vendor: Microsoft Hyper-V, criticality: MEDIUM, ad_computer: true, ports: [22, 3000, 3100, 9090, 9093], location: Rack A2 U16}
+  - {id: PC-023, kind: workstation, os: Windows 11 Enterprise 23H2, role: IT admin workstation, vlan: 30, ip: 10.30.30.42, dhcp: true, mac: "3C:52:82:4E:10:23", vendor: Dell, criticality: MEDIUM, ad_computer: true, owner: eldar, ports: [], location: Floor 2 / IT}
+  - {id: PC-024, kind: workstation, os: Windows 11 Enterprise 23H2, role: Finance workstation, vlan: 30, ip: 10.30.30.43, dhcp: true, mac: "3C:52:82:4E:10:24", vendor: Dell, criticality: MEDIUM, ad_computer: true, owner: aysel, ports: [], location: Floor 3 / Finance}
+  - {id: PC-025, kind: workstation, os: Windows 11 Enterprise 23H2, role: Sysadmin workstation, vlan: 30, ip: 10.30.30.44, dhcp: true, mac: "3C:52:82:4E:10:25", vendor: Lenovo, criticality: MEDIUM, ad_computer: true, owner: murad, ports: [], location: Floor 2 / IT}
+
+switchports:   # SW-CORE01 access ports
+  - {name: Gi1/0/1, device: PFSENSE, mode: trunk}
+  - {name: Gi1/0/2, device: DC01, vlan: 20}
+  - {name: Gi1/0/3, device: LINUX01, vlan: 20}
+  - {name: Gi1/0/4, device: APP01, vlan: 20}
+  - {name: Gi1/0/5, device: MON01, vlan: 40}
+  - {name: Gi1/0/11, device: PC-023, vlan: 30}
+  - {name: Gi1/0/12, device: PC-024, vlan: 30}
+  - {name: Gi1/0/13, device: PC-025, vlan: 30}
+  - {name: Gi1/0/14, device: null, vlan: 30}
+  - {name: Gi1/0/15, device: null, vlan: 30}
+  - {name: Gi1/0/16, device: null, vlan: 30}
+
+services:
+  - {id: firewall@PFSENSE, name: firewall, display: Firewall and inter-VLAN routing, kind: appliance, ports: [443], criticality: CRITICAL, consumers: all_users, rto: 15, rpo: 60}
+  - {id: dhcp@PFSENSE, name: dhcp, display: DHCP server, kind: appliance, unit: dhcpd, ports: [67], criticality: CRITICAL, consumers: all_users, rto: 15}
+  - {id: dns@DC01, name: dns, display: DNS, kind: windows, unit: DNS, ports: [53], criticality: CRITICAL, consumers: all_users, rto: 30, rpo: 0}
+  - {id: ntp@DC01, name: ntp, display: NTP (W32Time), kind: windows, unit: W32Time, ports: [123], criticality: HIGH, consumers: none, rto: 30}
+  - {id: ad-ds@DC01, name: ad-ds, display: AD DS (Kerberos / LDAP), kind: windows, unit: NTDS, ports: [88, 389, 636], criticality: CRITICAL, consumers: all_users, rto: 60, rpo: 15}
+  - {id: monitoring-agent@DC01, name: monitoring-agent, display: windows_exporter, kind: windows, unit: windows_exporter, ports: [9182], criticality: MEDIUM, consumers: operators}
+  - {id: ssh@LINUX01, name: ssh, display: OpenSSH server, unit: ssh, ports: [22], criticality: HIGH, consumers: lease_holders, rto: 30}
+  - {id: nginx@LINUX01, name: nginx, display: Nginx reverse proxy, unit: nginx, ports: [80, 443], criticality: HIGH, consumers: all_users, rto: 15, rpo: 0}
+  - {id: docker@LINUX01, name: docker, display: Docker engine, unit: docker, ports: [], criticality: MEDIUM, consumers: none}
+  - {id: monitoring-agent@LINUX01, name: monitoring-agent, display: node_exporter, unit: prometheus-node-exporter, ports: [9100], criticality: MEDIUM, consumers: operators}
+  - {id: ssh@APP01, name: ssh, display: OpenSSH server, unit: ssh, ports: [22], criticality: MEDIUM, consumers: lease_holders}
+  - {id: docker@APP01, name: docker, display: Docker engine, unit: docker, ports: [], criticality: HIGH, consumers: none, rto: 30}
+  - {id: postgresql@APP01, name: postgresql, display: PostgreSQL (container), kind: container, unit: portal-db, ports: [5432], criticality: HIGH, consumers: none, rto: 60, rpo: 15}
+  - {id: portal@APP01, name: portal, display: Intranet portal, kind: container, unit: portal, ports: [8080], criticality: HIGH, consumers: all_users, rto: 120, rpo: 60}
+  - {id: monitoring-agent@APP01, name: monitoring-agent, display: node_exporter, unit: prometheus-node-exporter, ports: [9100], criticality: MEDIUM, consumers: operators}
+  - {id: prometheus@MON01, name: prometheus, display: Prometheus, unit: prometheus, ports: [9090], criticality: MEDIUM, consumers: operators, rto: 240}
+  - {id: grafana@MON01, name: grafana, display: Grafana, unit: grafana-server, ports: [3000], criticality: LOW, consumers: operators}
+  - {id: loki@MON01, name: loki, display: Loki, unit: loki, ports: [3100], criticality: LOW, consumers: operators}
+
+dependencies:   # source depends on target
+  - {source: ad-ds@DC01, target: dns@DC01, description: Domain controllers are located through DNS SRV records}
+  - {source: ad-ds@DC01, target: ntp@DC01, description: Kerberos rejects clock skew above 5 minutes}
+  - {source: portal@APP01, target: nginx@LINUX01, description: Users reach the portal through the Nginx reverse proxy}
+  - {source: portal@APP01, target: ad-ds@DC01, description: Portal authenticates users with LDAP}
+  - {source: portal@APP01, target: postgresql@APP01, description: Portal data store}
+  - {source: portal@APP01, target: docker@APP01, description: Portal runs as a container}
+  - {source: postgresql@APP01, target: docker@APP01, description: Database runs as a container}
+  - {source: grafana@MON01, target: prometheus@MON01, description: Metrics data source}
+  - {source: grafana@MON01, target: loki@MON01, description: Logs data source}
+
+certificates:
+  - {id: portal.corp.nexus.lab, device: LINUX01, service: nginx@LINUX01, days_valid: 12}
+  - {id: dc01.corp.nexus.lab, device: DC01, service: ad-ds@DC01, days_valid: 214}
+  - {id: grafana.corp.nexus.lab, device: MON01, service: grafana@MON01, days_valid: 88}
+
+# Actual configuration as reported by host agents at start. It matches baselines/ except where noted.
+configs:
+  LINUX01:
+    ssh: {PermitRootLogin: "no", PasswordAuthentication: "no", Port: 22, MaxAuthTries: 3, X11Forwarding: "no", HostKey: /etc/ssh/ssh_host_ed25519_key}
+    nginx: {listen: [80, 443], server_name: portal.corp.nexus.lab, upstream: "10.20.20.30:8080", server_tokens: "off", ssl_certificate: /etc/ssl/portal.corp.nexus.lab.crt}
+    docker: {live-restore: true, log-driver: json-file, log-opts: {max-size: 50m}}
+    monitoring: {exporter: node_exporter, port: 9100, enabled: true}
+    services: {nginx: {enabled: true}, ssh: {enabled: true}, docker: {enabled: true}, monitoring-agent: {enabled: true}}
+    files: {/etc/ssh/sshd_config: "0600", /etc/shadow: "0640"}
+    host_files: [/etc/ssh/ssh_host_ed25519_key, /etc/ssl/portal.corp.nexus.lab.crt, /etc/ssl/private/portal.key]
+  APP01:
+    ssh: {PermitRootLogin: "no", PasswordAuthentication: "no", Port: 22, MaxAuthTries: 3, X11Forwarding: "no", HostKey: /etc/ssh/ssh_host_ed25519_key}
+    docker: {live-restore: true, log-driver: json-file, log-opts: {max-size: 50m}}
+    monitoring: {exporter: node_exporter, port: 9100, enabled: true}
+    services: {ssh: {enabled: true}, docker: {enabled: true}, monitoring-agent: {enabled: true}}
+    files: {/etc/ssh/sshd_config: "0600", /etc/shadow: "0640"}
+    host_files: [/etc/ssh/ssh_host_ed25519_key]
+  MON01:
+    ssh: {PermitRootLogin: "no", PasswordAuthentication: "no", Port: 22, MaxAuthTries: 3, X11Forwarding: "no", HostKey: /etc/ssh/ssh_host_ed25519_key}
+    monitoring: {exporter: prometheus, scrape_interval: 15s, retention: 15d, enabled: true}
+    motd: {banner: "Authorised access only. Activity is monitored."}
+    host_files: [/etc/ssh/ssh_host_ed25519_key]
+  DC01:
+    windows: {smb1_enabled: false, firewall_profiles: [Domain, Private, Public], rdp_nla_required: true, min_password_length: 14, audit_logon_events: true, lockout_threshold: 10}
+    dns: {forwarders: [10.10.10.1], scavenging: true, zone: corp.nexus.lab}
+    ntp: {source: 10.10.10.1, type: NTP}
+  PFSENSE:
+    system: {webgui_protocol: https, ssh_enabled: false, admin_mfa: true}
+
+disks:
+  DC01: {"C:": 46}
+  LINUX01: {"/": 41, "/var": 38}
+  APP01: {"/": 52, "/var": 47}
+  MON01: {"/": 58, "/var/lib/prometheus": 63}
+  PFSENSE: {"/": 18}
+  SW-CORE01: {"flash:": 22}
+  PC-023: {"C:": 61}
+  PC-024: {"C:": 55}
+  PC-025: {"C:": 72}

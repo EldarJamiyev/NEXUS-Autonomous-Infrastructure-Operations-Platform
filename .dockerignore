@@ -1,0 +1,16 @@
+.git
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+**/*.egg-info
+**/data
+**/*.db
+**/*.db-wal
+**/*.db-shm
+frontend/node_modules
+frontend/dist
+.env
+secrets
+docs/screenshots
